@@ -60,9 +60,20 @@
     </aside>
 
     <section id="order-summary" class="order-summary" aria-labelledby="summary-heading" hidden>
+      <nav class="checkout-progress" aria-label="Checkout progress">
+        <span class="checkout-step checkout-step-active" aria-current="step">Order</span>
+        <span class="checkout-progress-arrow" aria-hidden="true">→</span>
+        <span class="checkout-step">Payment</span>
+        <span class="checkout-progress-arrow" aria-hidden="true">→</span>
+        <span class="checkout-step">Receipt</span>
+      </nav>
       <h2 id="summary-heading" tabindex="-1">Order Summary</h2>
+      <p class="summary-subtitle">Review your order before payment.</p>
       <ul id="summary-items" class="summary-items" aria-live="polite"></ul>
-      <p class="summary-total">Total: <span id="summary-total-amount">₱0.00</span></p>
+      <div class="summary-total-card">
+        <h3>Order Total</h3>
+        <p class="summary-total">Total: <span id="summary-total-amount">₱0.00</span></p>
+      </div>
       <p id="summary-feedback" class="summary-feedback" role="status" aria-live="polite"></p>
       <div class="summary-actions">
         <button id="back-button" class="back-button" type="button">Back to Item Selection</button>
@@ -73,17 +84,35 @@
     </section>
 
     <section id="payment-screen" class="payment-screen" aria-labelledby="payment-heading" hidden>
-      <h2 id="payment-heading" tabindex="-1">Choose a Payment Method</h2>
-      <p class="payment-due">Amount due: <span id="payment-total-amount">₱0.00</span></p>
+      <nav class="checkout-progress" aria-label="Checkout progress">
+        <span class="checkout-step">Order</span>
+        <span class="checkout-progress-arrow" aria-hidden="true">→</span>
+        <span class="checkout-step checkout-step-active" aria-current="step">Payment</span>
+        <span class="checkout-progress-arrow" aria-hidden="true">→</span>
+        <span class="checkout-step">Receipt</span>
+      </nav>
+      <h2 id="payment-heading" tabindex="-1">Choose Payment Method</h2>
+      <p class="payment-subtitle">Select your preferred payment option.</p>
+      <span id="payment-total-amount" hidden>₱0.00</span>
 
       <div id="payment-method-options" class="payment-method-options">
-        <button class="payment-method-button" type="button" data-payment-method="cash">Cash</button>
-        <button class="payment-method-button" type="button" data-payment-method="qr">QR Payment</button>
-        <button class="payment-method-button" type="button" data-payment-method="card">Credit/Debit Card</button>
+        <button class="payment-method-button" type="button" data-payment-method="cash">
+          <span class="payment-method-name">Cash Payment</span>
+          <span class="payment-method-description">Pay using physical cash.</span>
+        </button>
+        <button class="payment-method-button" type="button" data-payment-method="qr">
+          <span class="payment-method-name">QR Payment</span>
+          <span class="payment-method-description">Scan QR code using your e-wallet or banking app.</span>
+        </button>
+        <button class="payment-method-button" type="button" data-payment-method="card">
+          <span class="payment-method-name">Credit / Debit Card</span>
+          <span class="payment-method-description">Pay using your credit or debit card.</span>
+        </button>
       </div>
 
       <section id="cash-payment-panel" class="payment-panel" aria-labelledby="cash-heading" hidden>
         <h3 id="cash-heading" tabindex="-1">Cash Payment</h3>
+        <p class="payment-panel-subtitle">Enter the amount received from the customer.</p>
         <p class="payment-due">Total amount due: <span class="payment-total-value">₱0.00</span></p>
         <form id="cash-payment-form" novalidate>
           <label for="cash-amount">Amount paid</label>
@@ -93,36 +122,68 @@
           </div>
           <p id="cash-feedback" class="payment-feedback" role="alert" aria-live="polite"></p>
           <p id="cash-change" class="payment-change" hidden>Change: <span id="cash-change-amount">₱0.00</span></p>
-          <button class="payment-action-button" type="submit">Pay Now</button>
+          <div class="payment-panel-actions">
+            <button class="payment-action-button" type="submit">Pay Now</button>
+          </div>
         </form>
       </section>
 
       <section id="qr-payment-panel" class="payment-panel" aria-labelledby="qr-heading" hidden>
         <h3 id="qr-heading" tabindex="-1">QR Payment</h3>
-        <p class="payment-due">Amount to pay: <span class="payment-total-value">₱0.00</span></p>
-        <p class="qr-instructions">Scan this simulated QR code using your payment app.</p>
-        <div class="qr-placeholder" role="img" aria-label="Simulated QR code placeholder">QR</div>
-        <p id="qr-feedback" class="payment-status" role="status" aria-live="polite"></p>
-        <button id="confirm-qr-button" class="payment-action-button" type="button">Confirm Payment</button>
+        <div class="qr-payment-layout">
+          <div class="qr-placeholder" role="img" aria-label="Simulated QR code placeholder">
+            <span aria-hidden="true">QR</span>
+          </div>
+          <div class="qr-payment-details">
+            <h4>Scan to Pay</h4>
+            <p class="qr-instructions">Use your e-wallet or banking app to scan this simulated QR code.</p>
+            <p class="qr-amount">Amount to pay <span class="payment-total-value">₱0.00</span></p>
+            <p id="qr-feedback" class="payment-status" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="payment-panel-actions">
+          <button id="confirm-qr-button" class="payment-action-button" type="button">I Have Paid</button>
+        </div>
       </section>
 
       <section id="card-payment-panel" class="payment-panel" aria-labelledby="card-heading" hidden>
-        <h3 id="card-heading" tabindex="-1">Credit/Debit Card</h3>
+        <h3 id="card-heading" tabindex="-1">Credit / Debit Card</h3>
+        <p class="payment-panel-subtitle">Enter your card details to complete the payment.</p>
+        <div class="card-payment-layout">
+          <div class="card-preview" aria-label="Sample Campus Store card preview">
+            <span class="card-preview-brand">CAMPUS STORE</span>
+            <span class="card-preview-chip" aria-hidden="true"></span>
+            <span class="card-preview-number">•••• &nbsp; •••• &nbsp; •••• &nbsp; 4150</span>
+            <span class="card-preview-footer">CARDHOLDER NAME <span>MM/YY</span></span>
+          </div>
+          <div class="card-payment-form-preview" aria-label="Card details example">
+            <label>Cardholder Name<input type="text" placeholder="Name on card" disabled></label>
+            <label>Card Number<input type="text" placeholder="•••• •••• •••• 0000" disabled></label>
+            <div class="card-payment-field-row">
+              <label>Expiry Date<input type="text" placeholder="MM/YY" disabled></label>
+              <label>CVV<input type="text" placeholder="•••" disabled></label>
+            </div>
+            <p class="card-demo-note">Demo payment only. Card details are not collected.</p>
+          </div>
+        </div>
         <p class="payment-due">Amount due: <span class="payment-total-value">₱0.00</span></p>
-        <p>Please tap, insert, or swipe your card.</p>
         <p id="card-feedback" class="payment-status" role="status" aria-live="polite"></p>
-        <button id="process-card-button" class="payment-action-button" type="button">Process Payment</button>
+        <div class="payment-panel-actions">
+          <button id="process-card-button" class="payment-action-button" type="button">
+            Pay <span class="payment-total-value">₱0.00</span>
+          </button>
+        </div>
       </section>
 
       <div class="payment-navigation">
         <button id="payment-method-back-button" class="back-button" type="button" hidden>
-          Choose Another Method
+          Back to Payment Method
         </button>
         <button id="payment-back-button" class="back-button" type="button">Back to Order Summary</button>
       </div>
     </section>
 
-    <section id="payment-success" class="payment-success" aria-labelledby="payment-success-heading" hidden>
+    <section id="payment-success" class="payment-success" role="dialog" aria-modal="true" aria-label="Payment result" hidden>
       <div id="payment-confirmation">
         <h2 id="payment-success-heading" tabindex="-1">Payment Successful</h2>
         <p>Your payment has been completed.</p>
@@ -135,35 +196,50 @@
         </dl>
         <button id="view-receipt-button" class="receipt-action-button" type="button">View Receipt</button>
       </div>
+    </section>
 
-      <section id="receipt-screen" class="receipt-screen" aria-labelledby="receipt-heading" hidden>
+    <section id="receipt-screen" class="receipt-screen" aria-labelledby="receipt-heading" hidden>
+        <nav class="checkout-progress" aria-label="Checkout progress">
+          <span class="checkout-step checkout-step-complete">Order</span>
+          <span class="checkout-progress-arrow" aria-hidden="true">→</span>
+          <span class="checkout-step checkout-step-complete">Payment</span>
+          <span class="checkout-progress-arrow" aria-hidden="true">→</span>
+          <span class="checkout-step checkout-step-active" aria-current="step">Receipt</span>
+        </nav>
         <h2 id="receipt-heading" tabindex="-1">Digital Receipt</h2>
-        <dl class="payment-receipt-details">
-          <div><dt>Transaction reference</dt><dd id="receipt-reference"></dd></div>
-          <div><dt>Transaction date</dt><dd id="receipt-date"></dd></div>
+        <p class="receipt-subtitle">Your transaction was completed successfully.</p>
+        <div class="receipt-success-banner" role="status">
+          <span class="receipt-success-icon" aria-hidden="true">✓</span>
+          <span>Payment Successful</span>
+        </div>
+        <dl class="payment-receipt-details receipt-transaction-details">
+          <div><dt>Transaction ID</dt><dd id="receipt-reference"></dd></div>
+          <div><dt>Date and time</dt><dd id="receipt-date"></dd></div>
         </dl>
-        <h3>Purchased Items</h3>
+        <h3 class="receipt-items-heading">Purchased Items</h3>
         <ul id="receipt-items" class="receipt-items"></ul>
-        <dl class="payment-receipt-details">
-          <div><dt>Total amount</dt><dd id="receipt-total"></dd></div>
+        <div class="receipt-total-card">
+          <span>Total</span>
+          <strong id="receipt-total"></strong>
+        </div>
+        <dl class="payment-receipt-details receipt-payment-details">
           <div><dt>Payment method</dt><dd id="receipt-method"></dd></div>
           <div><dt>Amount paid</dt><dd id="receipt-paid"></dd></div>
           <div><dt>Change</dt><dd id="receipt-change-amount"></dd></div>
-          <div><dt>Transaction status</dt><dd id="receipt-status">Payment Successful</dd></div>
         </dl>
         <div class="receipt-actions">
           <button id="back-to-success-button" class="back-button" type="button">
-            Back to Payment Successful
+            Back
           </button>
           <button id="new-transaction-button" class="receipt-action-button" type="button">
             New Transaction
           </button>
         </div>
       </section>
-    </section>
 
     <section id="transaction-history-screen" class="transaction-history-screen" aria-labelledby="history-heading" hidden>
       <h2 id="history-heading" tabindex="-1">Transaction History</h2>
+      <p class="history-subtitle">Review completed transactions from this session.</p>
       <p id="history-empty" class="history-empty">No transactions yet.</p>
       <ul id="history-list" class="history-list"></ul>
 
