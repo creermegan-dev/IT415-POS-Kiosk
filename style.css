@@ -38,7 +38,8 @@ body {
 }
 
 .product-selection,
-.order-cart {
+.order-cart,
+.order-summary {
   padding: 1.5rem;
   border: 1px solid #d8e1dc;
   border-radius: 12px;
@@ -46,7 +47,8 @@ body {
 }
 
 .product-selection h2,
-.order-cart h2 {
+.order-cart h2,
+.order-summary h2 {
   margin: 0;
   font-size: 1.5rem;
 }
@@ -86,6 +88,12 @@ body {
 
 .product-card:focus-visible,
 .proceed-button:focus-visible {
+  outline: 4px solid #e3a72f;
+  outline-offset: 3px;
+}
+
+.back-button:focus-visible,
+.continue-payment-button:focus-visible {
   outline: 4px solid #e3a72f;
   outline-offset: 3px;
 }
@@ -151,8 +159,95 @@ body {
   background: #10543e;
 }
 
+.order-feedback {
+  color: #a33126;
+  font-weight: 700;
+}
+
+.summary-feedback {
+  color: #52615a;
+}
+
+.order-summary {
+  grid-column: 1 / -1;
+}
+
+.summary-items {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary-item {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(100px, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #d8e1dc;
+  border-radius: 8px;
+  background: #f8fbf9;
+}
+
+.summary-item-name {
+  font-weight: 700;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid #d8e1dc;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+#summary-total-amount {
+  color: #176b50;
+}
+
+.summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.back-button,
+.continue-payment-button {
+  min-height: 60px;
+  padding: 1rem 1.25rem;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.back-button {
+  background: #52615a;
+}
+
+.back-button:hover {
+  background: #3f4b45;
+}
+
+.continue-payment-button {
+  background: #176b50;
+}
+
+.continue-payment-button:hover {
+  background: #10543e;
+}
+
 .product-card:active,
-.proceed-button:active {
+.proceed-button:active,
+.back-button:active,
+.continue-payment-button:active {
   background-color: #0d4634;
   color: #ffffff;
 }
@@ -182,7 +277,8 @@ body {
   }
 
   .product-selection,
-  .order-cart {
+  .order-cart,
+  .order-summary {
     padding: 1rem;
   }
 
@@ -194,5 +290,18 @@ body {
   .product-card {
     min-height: 120px;
     padding: 1rem;
+  }
+
+  .summary-item {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .summary-actions {
+    flex-direction: column;
+  }
+
+  .back-button,
+  .continue-payment-button {
+    width: 100%;
   }
 }
