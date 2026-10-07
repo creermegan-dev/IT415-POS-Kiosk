@@ -19,13 +19,21 @@ const paymentPanels = {
 const paymentMethodBackButton = document.getElementById("payment-method-back-button");
 const paymentBackButton = document.getElementById("payment-back-button");
 const paymentSuccess = document.getElementById("payment-success");
+const paymentConfirmation = document.getElementById("payment-confirmation");
+const receiptScreen = document.getElementById("receipt-screen");
+const receiptItems = document.getElementById("receipt-items");
 
 const order = new Map();
 const paymentRecord = {
   method: "",
   amountPaidInCents: 0,
-  changeInCents: 0
+  changeInCents: 0,
+  transactionReference: "",
+  transactionDate: "",
+  totalInCents: 0,
+  items: []
 };
+let transactionSequence = 0;
 
 function formatPrice(priceInCents) {
   return `₱${(priceInCents / 100).toFixed(2)}`;
@@ -232,8 +240,12 @@ function showPaymentScreen() {
   document.getElementById("cash-amount").value = "";
   document.getElementById("cash-feedback").textContent = "";
   document.getElementById("cash-change").hidden = true;
+  document.getElementById("cash-change-amount").textContent = formatPrice(0);
   document.getElementById("qr-feedback").textContent = "";
   document.getElementById("card-feedback").textContent = "";
+  document.getElementById("process-card-button").disabled = false;
+  paymentBackButton.disabled = false;
+  paymentMethodBackButton.disabled = false;
   showPaymentMethodOptions();
   document.getElementById("payment-heading").focus();
 }
@@ -256,7 +268,13 @@ function showPaymentSuccess() {
   productSelection.hidden = true;
   orderCart.hidden = true;
   paymentSuccess.hidden = false;
+  paymentConfirmation.hidden = false;
+  receiptScreen.hidden = true;
 
+  document.getElementById("success-reference").textContent =
+    paymentRecord.transactionReference;
+  document.getElementById("success-total").textContent =
+    formatPrice(paymentRecord.totalInCents);
   document.getElementById("receipt-payment-method").textContent = paymentRecord.method;
   document.getElementById("receipt-amount-paid").textContent =
     formatPrice(paymentRecord.amountPaidInCents);
@@ -265,12 +283,130 @@ function showPaymentSuccess() {
   document.getElementById("payment-success-heading").focus();
 }
 
+function generateTransactionReference() {
+  transactionSequence += 1;
+
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return `POS-${window.crypto.randomUUID()}`;
+  }
+
+  return `POS-${Date.now().toString(36).toUpperCase()}-${transactionSequence}`;
+}
+
+function renderReceipt() {
+  receiptItems.replaceChildren();
+
+  for (const product of paymentRecord.items) {
+    const subtotalInCents = product.unitPriceInCents * product.quantity;
+    const item = document.createElement("li");
+    item.className = "receipt-item";
+
+    const name = document.createElement("span");
+    name.className = "receipt-item-name";
+    name.textContent = product.name;
+
+    const quantity = document.createElement("span");
+    quantity.textContent = `Quantity: ${product.quantity}`;
+
+    const unitPrice = document.createElement("span");
+    unitPrice.textContent = `Unit price: ${formatPrice(product.unitPriceInCents)}`;
+
+    const subtotal = document.createElement("span");
+    subtotal.textContent = `Subtotal: ${formatPrice(subtotalInCents)}`;
+
+    item.append(name, quantity, unitPrice, subtotal);
+    receiptItems.append(item);
+  }
+
+  document.getElementById("receipt-reference").textContent =
+    paymentRecord.transactionReference;
+  document.getElementById("receipt-date").textContent = paymentRecord.transactionDate;
+  document.getElementById("receipt-total").textContent =
+    formatPrice(paymentRecord.totalInCents);
+  document.getElementById("receipt-method").textContent = paymentRecord.method;
+  document.getElementById("receipt-paid").textContent =
+    formatPrice(paymentRecord.amountPaidInCents);
+  document.getElementById("receipt-change-amount").textContent =
+    formatPrice(paymentRecord.changeInCents);
+  document.getElementById("receipt-status").textContent = "Payment Successful";
+}
+
 function completePayment(method, amountPaidInCents) {
   const totalInCents = getOrderTotalInCents();
   paymentRecord.method = method;
   paymentRecord.amountPaidInCents = amountPaidInCents;
   paymentRecord.changeInCents = Math.max(0, amountPaidInCents - totalInCents);
+  paymentRecord.transactionReference = generateTransactionReference();
+  paymentRecord.transactionDate = new Date().toLocaleString();
+  paymentRecord.totalInCents = totalInCents;
+  paymentRecord.items = Array.from(order.values(), (product) => ({ ...product }));
   showPaymentSuccess();
+}
+
+function showReceipt() {
+  renderReceipt();
+  paymentConfirmation.hidden = true;
+  receiptScreen.hidden = false;
+  document.getElementById("receipt-heading").focus();
+}
+
+function returnToPaymentSuccess() {
+  receiptScreen.hidden = true;
+  paymentConfirmation.hidden = false;
+  document.getElementById("payment-success-heading").focus();
+}
+
+function startNewTransaction() {
+  order.clear();
+  Object.assign(paymentRecord, {
+    method: "",
+    amountPaidInCents: 0,
+    changeInCents: 0,
+    transactionReference: "",
+    transactionDate: "",
+    totalInCents: 0,
+    items: []
+  });
+
+  paymentSuccess.hidden = true;
+  paymentConfirmation.hidden = false;
+  receiptScreen.hidden = true;
+  orderSummary.hidden = true;
+  paymentScreen.hidden = true;
+  productSelection.hidden = false;
+  orderCart.hidden = false;
+  summaryItems.replaceChildren();
+  receiptItems.replaceChildren();
+
+  document.getElementById("summary-total-amount").textContent = formatPrice(0);
+  document.getElementById("payment-total-amount").textContent = formatPrice(0);
+  document.getElementById("success-reference").textContent = "";
+  document.getElementById("success-total").textContent = "";
+  document.getElementById("receipt-payment-method").textContent = "";
+  document.getElementById("receipt-amount-paid").textContent = "";
+  document.getElementById("receipt-change").textContent = "";
+  document.getElementById("receipt-reference").textContent = "";
+  document.getElementById("receipt-date").textContent = "";
+  document.getElementById("receipt-total").textContent = "";
+  document.getElementById("receipt-method").textContent = "";
+  document.getElementById("receipt-paid").textContent = "";
+  document.getElementById("receipt-change-amount").textContent = "";
+  document.getElementById("receipt-status").textContent = "";
+  document.getElementById("summary-feedback").textContent = "";
+  document.getElementById("order-feedback").textContent = "";
+  document.getElementById("order-feedback").hidden = true;
+  document.getElementById("cash-amount").value = "";
+  document.getElementById("cash-feedback").textContent = "";
+  document.getElementById("cash-change").hidden = true;
+  document.getElementById("cash-change-amount").textContent = formatPrice(0);
+  document.getElementById("qr-feedback").textContent = "";
+  document.getElementById("card-feedback").textContent = "";
+  document.getElementById("process-card-button").disabled = false;
+  paymentBackButton.disabled = false;
+  paymentMethodBackButton.disabled = false;
+  showPaymentMethodOptions();
+  renderOrder();
+  document.querySelector(".product-card").focus();
 }
 
 function handleCashPayment(event) {
@@ -382,5 +518,8 @@ paymentBackButton.addEventListener("click", () => {
 document.getElementById("cash-payment-form").addEventListener("submit", handleCashPayment);
 document.getElementById("confirm-qr-button").addEventListener("click", confirmQrPayment);
 document.getElementById("process-card-button").addEventListener("click", processCardPayment);
+document.getElementById("view-receipt-button").addEventListener("click", showReceipt);
+document.getElementById("back-to-success-button").addEventListener("click", returnToPaymentSuccess);
+document.getElementById("new-transaction-button").addEventListener("click", startNewTransaction);
 
 renderOrder();
