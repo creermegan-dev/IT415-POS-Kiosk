@@ -199,7 +199,8 @@
       </div>
     </section>
 
-    <section id="receipt-screen" class="receipt-screen" aria-labelledby="receipt-heading" hidden>
+    <section id="receipt-screen" class="receipt-screen" aria-labelledby="receipt-page-heading" hidden>
+      <div class="receipt-card">
         <nav class="checkout-progress" aria-label="Checkout progress">
           <span class="checkout-step checkout-step-complete">Order</span>
           <span class="checkout-progress-arrow" aria-hidden="true">→</span>
@@ -207,36 +208,52 @@
           <span class="checkout-progress-arrow" aria-hidden="true">→</span>
           <span class="checkout-step checkout-step-active" aria-current="step">Receipt</span>
         </nav>
-        <h2 id="receipt-heading" tabindex="-1">Digital Receipt</h2>
-        <p class="receipt-subtitle">Your transaction was completed successfully.</p>
-        <div class="receipt-success-banner" role="status">
-          <span class="receipt-success-icon" aria-hidden="true">✓</span>
-          <span>Payment Successful</span>
-        </div>
+        <header class="receipt-page-heading">
+          <h2 id="receipt-page-heading">Digital Receipt</h2>
+          <p>Completed transaction details</p>
+        </header>
+        <h2 id="receipt-heading" tabindex="-1">Campus Store POS</h2>
+        <p class="receipt-subtitle">SELF-SERVICE ORDERING KIOSK</p>
+        <div class="receipt-order-confirmed"><span aria-hidden="true">✓</span> ORDER CONFIRMED</div>
         <dl class="payment-receipt-details receipt-transaction-details">
-          <div><dt>Transaction ID</dt><dd id="receipt-reference"></dd></div>
-          <div><dt>Date and time</dt><dd id="receipt-date"></dd></div>
+          <div><dt>Order No.</dt><dd id="receipt-reference"></dd></div>
+          <div><dt>Date &amp; Time</dt><dd id="receipt-date"></dd></div>
         </dl>
-        <h3 class="receipt-items-heading">Purchased Items</h3>
+        <h3 class="receipt-items-heading">ORDER DETAILS</h3>
+        <div class="receipt-items-labels" aria-hidden="true">
+          <span></span><span>Item</span><span>Quantity</span><span>Unit Price</span><span>Subtotal</span>
+        </div>
         <ul id="receipt-items" class="receipt-items"></ul>
+        <div class="receipt-subtotal-row">
+          <span>Items <strong id="receipt-item-count">0</strong></span>
+          <span>Subtotal <strong id="receipt-subtotal">₱0.00</strong></span>
+        </div>
         <div class="receipt-total-card">
-          <span>Total</span>
+          <span>TOTAL</span>
           <strong id="receipt-total"></strong>
         </div>
+        <h3 class="receipt-payment-heading">PAYMENT DETAILS</h3>
         <dl class="payment-receipt-details receipt-payment-details">
-          <div><dt>Payment method</dt><dd id="receipt-method"></dd></div>
-          <div><dt>Amount paid</dt><dd id="receipt-paid"></dd></div>
+          <div><dt>Payment Method</dt><dd id="receipt-method"></dd></div>
+          <div><dt>Amount Paid</dt><dd id="receipt-paid"></dd></div>
           <div><dt>Change</dt><dd id="receipt-change-amount"></dd></div>
         </dl>
-        <div class="receipt-actions">
-          <button id="back-to-success-button" class="back-button" type="button">
-            Back
-          </button>
-          <button id="new-transaction-button" class="receipt-action-button" type="button">
-            New Transaction
-          </button>
+        <div class="receipt-success-banner" role="status">
+          <span class="receipt-success-icon" aria-hidden="true">✓</span>
+          <span>PAYMENT SUCCESSFUL</span>
+          <strong id="receipt-success-method"></strong>
         </div>
-      </section>
+        <div class="receipt-reference-footer">
+          <span>Transaction Reference</span>
+          <strong id="receipt-footer-reference"></strong>
+        </div>
+        <p class="receipt-thank-you">Thank you for shopping at Campus Store POS!<br>Please keep this receipt for your records.</p>
+        <footer class="receipt-actions">
+          <button id="print-receipt-button" class="receipt-print-button receipt-action-button" type="button">🖨 Print Receipt</button>
+          <button id="new-transaction-button" class="receipt-new-transaction-button receipt-action-button" type="button">↻ New Transaction</button>
+        </footer>
+      </div>
+    </section>
 
     <section id="transaction-history-screen" class="transaction-history-screen" aria-labelledby="history-heading" hidden>
       <h2 id="history-heading" tabindex="-1">Transaction History</h2>

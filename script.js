@@ -337,8 +337,10 @@ function generateTransactionReference() {
 
 function renderReceipt() {
   receiptItems.replaceChildren();
+  let itemCount = 0;
 
   for (const product of paymentRecord.items) {
+    itemCount += product.quantity;
     const subtotalInCents = product.unitPriceInCents * product.quantity;
     const item = document.createElement("li");
     item.className = "receipt-item";
@@ -357,13 +359,16 @@ function renderReceipt() {
     name.textContent = product.name;
 
     const quantity = document.createElement("span");
-    quantity.textContent = `Quantity: ${product.quantity}`;
+    quantity.textContent = product.quantity;
+    quantity.setAttribute("aria-label", `Quantity: ${product.quantity}`);
 
     const unitPrice = document.createElement("span");
-    unitPrice.textContent = `Unit price: ${formatPrice(product.unitPriceInCents)}`;
+    unitPrice.textContent = formatPrice(product.unitPriceInCents);
+    unitPrice.setAttribute("aria-label", `Unit price: ${formatPrice(product.unitPriceInCents)}`);
 
     const subtotal = document.createElement("span");
-    subtotal.textContent = `Subtotal: ${formatPrice(subtotalInCents)}`;
+    subtotal.textContent = formatPrice(subtotalInCents);
+    subtotal.setAttribute("aria-label", `Subtotal: ${formatPrice(subtotalInCents)}`);
 
     item.append(name, quantity, unitPrice, subtotal);
     receiptItems.append(item);
@@ -371,10 +376,16 @@ function renderReceipt() {
 
   document.getElementById("receipt-reference").textContent =
     paymentRecord.transactionReference;
+  document.getElementById("receipt-footer-reference").textContent =
+    paymentRecord.transactionReference;
   document.getElementById("receipt-date").textContent = paymentRecord.transactionDate;
+  document.getElementById("receipt-item-count").textContent = itemCount;
+  document.getElementById("receipt-subtotal").textContent =
+    formatPrice(paymentRecord.totalInCents);
   document.getElementById("receipt-total").textContent =
     formatPrice(paymentRecord.totalInCents);
   document.getElementById("receipt-method").textContent = paymentRecord.method;
+  document.getElementById("receipt-success-method").textContent = paymentRecord.method;
   document.getElementById("receipt-paid").textContent =
     formatPrice(paymentRecord.amountPaidInCents);
   document.getElementById("receipt-change-amount").textContent =
@@ -692,20 +703,16 @@ async function completePayment(method, amountPaidInCents) {
   showPaymentSuccess();
 }
 
-function showReceipt() {
+function showReceiptPage() {
   renderReceipt();
+  productSelection.hidden = true;
+  orderCart.hidden = true;
+  orderSummary.hidden = true;
+  paymentScreen.hidden = true;
   receiptScreen.hidden = false;
   paymentSuccess.hidden = true;
-  paymentScreen.hidden = true;
+  transactionHistoryScreen.hidden = true;
   document.getElementById("receipt-heading").focus();
-}
-
-function returnToPaymentSuccess() {
-  receiptScreen.hidden = true;
-  paymentScreen.hidden = false;
-  paymentSuccess.hidden = false;
-  paymentConfirmation.hidden = false;
-  document.getElementById("payment-success-heading").focus();
 }
 
 function startNewTransaction() {
@@ -742,9 +749,13 @@ function startNewTransaction() {
   document.getElementById("receipt-amount-paid").textContent = "";
   document.getElementById("receipt-change").textContent = "";
   document.getElementById("receipt-reference").textContent = "";
+  document.getElementById("receipt-footer-reference").textContent = "";
   document.getElementById("receipt-date").textContent = "";
+  document.getElementById("receipt-item-count").textContent = "0";
+  document.getElementById("receipt-subtotal").textContent = formatPrice(0);
   document.getElementById("receipt-total").textContent = "";
   document.getElementById("receipt-method").textContent = "";
+  document.getElementById("receipt-success-method").textContent = "";
   document.getElementById("receipt-paid").textContent = "";
   document.getElementById("receipt-change-amount").textContent = "";
   document.getElementById("summary-feedback").textContent = "";
@@ -873,9 +884,9 @@ paymentBackButton.addEventListener("click", () => {
 document.getElementById("cash-payment-form").addEventListener("submit", handleCashPayment);
 document.getElementById("confirm-qr-button").addEventListener("click", confirmQrPayment);
 document.getElementById("process-card-button").addEventListener("click", processCardPayment);
-document.getElementById("view-receipt-button").addEventListener("click", showReceipt);
-document.getElementById("back-to-success-button").addEventListener("click", returnToPaymentSuccess);
+document.getElementById("view-receipt-button").addEventListener("click", showReceiptPage);
 document.getElementById("new-transaction-button").addEventListener("click", startNewTransaction);
+document.getElementById("print-receipt-button").addEventListener("click", () => window.print());
 document.getElementById("transaction-history-button").addEventListener("click", showTransactionHistory);
 historyList.addEventListener("click", (event) => {
   const transactionButton = event.target.closest("button[data-history-index]");
