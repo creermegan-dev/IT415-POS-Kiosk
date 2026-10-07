@@ -54,6 +54,9 @@
       <button id="proceed-button" class="proceed-button" type="button">
         Proceed to Order Summary
       </button>
+      <button id="transaction-history-button" class="history-button" type="button">
+        Transaction History
+      </button>
     </aside>
 
     <section id="order-summary" class="order-summary" aria-labelledby="summary-heading" hidden>
@@ -157,6 +160,36 @@
           </button>
         </div>
       </section>
+    </section>
+
+    <section id="transaction-history-screen" class="transaction-history-screen" aria-labelledby="history-heading" hidden>
+      <h2 id="history-heading" tabindex="-1">Transaction History</h2>
+      <p id="history-empty" class="history-empty">No transactions yet.</p>
+      <ul id="history-list" class="history-list"></ul>
+
+      <section id="history-detail" class="history-detail" aria-labelledby="history-detail-heading" hidden>
+        <h3 id="history-detail-heading" tabindex="-1">Transaction Details</h3>
+        <dl class="payment-receipt-details">
+          <div><dt>Transaction reference</dt><dd id="history-reference"></dd></div>
+          <div><dt>Date and time</dt><dd id="history-date"></dd></div>
+        </dl>
+        <h4>Purchased Items</h4>
+        <ul id="history-detail-items" class="receipt-items"></ul>
+        <dl class="payment-receipt-details">
+          <div><dt>Total amount</dt><dd id="history-total"></dd></div>
+          <div><dt>Payment method</dt><dd id="history-method"></dd></div>
+          <div><dt>Amount paid</dt><dd id="history-paid"></dd></div>
+          <div><dt>Change</dt><dd id="history-change"></dd></div>
+          <div><dt>Payment status</dt><dd id="history-status"></dd></div>
+        </dl>
+        <button id="history-list-back-button" class="back-button" type="button">
+          Back to Transaction History
+        </button>
+      </section>
+
+      <button id="history-back-button" class="back-button" type="button">
+        Back to Item Selection
+      </button>
     </section>
   </main>
 </body>

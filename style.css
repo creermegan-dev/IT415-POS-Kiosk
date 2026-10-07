@@ -184,7 +184,8 @@ body {
 }
 
 .payment-screen,
-.payment-success {
+.payment-success,
+.transaction-history-screen {
   grid-column: 1 / -1;
 }
 
@@ -483,13 +484,96 @@ body {
   background: #10543e;
 }
 
+.history-button {
+  width: 100%;
+  min-height: 60px;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #176b50;
+  border-radius: 8px;
+  color: #176b50;
+  background: #ffffff;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.history-button:hover {
+  background: #eef7f1;
+}
+
+.transaction-history-screen h2 {
+  margin-top: 0;
+}
+
+.history-empty {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border-radius: 8px;
+  color: #52615a;
+  background: #f2f5f3;
+}
+
+.history-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-entry-button {
+  display: flex;
+  width: 100%;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid #cbd9d1;
+  border-radius: 8px;
+  color: #1f2933;
+  background: #f8fbf9;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.history-entry-button:hover {
+  border-color: #176b50;
+  background: #eef7f1;
+}
+
+.history-entry-reference {
+  font-weight: 700;
+}
+
+.history-detail {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border: 1px solid #d8e1dc;
+  border-radius: 10px;
+  background: #f8fbf9;
+}
+
+.history-detail h3 {
+  margin-top: 0;
+}
+
+.history-detail h4 {
+  margin-top: 1.5rem;
+}
+
 .product-card:active,
 .proceed-button:active,
 .back-button:active,
 .continue-payment-button:active,
 .payment-method-button:active,
 .payment-action-button:active,
-.receipt-action-button:active {
+.receipt-action-button:active,
+.history-button:active,
+.history-entry-button:active {
   background-color: #0d4634;
   color: #ffffff;
 }
@@ -522,7 +606,8 @@ body {
   .order-cart,
   .order-summary,
   .payment-screen,
-  .payment-success {
+  .payment-success,
+  .transaction-history-screen {
     padding: 1rem;
   }
 
@@ -542,6 +627,11 @@ body {
 
   .receipt-item {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .history-entry-button {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .summary-actions {
