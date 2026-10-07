@@ -159,12 +159,13 @@ function renderSummary() {
 
   let totalInCents = 0;
 
-  for (const product of order.values()) {
+  for (const [productId, product] of order) {
     const subtotalInCents = product.unitPriceInCents * product.quantity;
     totalInCents += subtotalInCents;
 
     const summaryItem = document.createElement("li");
     summaryItem.className = "summary-item";
+    summaryItem.dataset.productId = productId;
 
     const name = document.createElement("span");
     name.className = "summary-item-name";
@@ -217,7 +218,9 @@ function returnToItemSelection() {
 
 function showPaymentMethodOptions() {
   paymentMethodOptions.hidden = false;
+  document.querySelector(".payment-navigation").append(paymentMethodBackButton);
   paymentMethodBackButton.hidden = true;
+  paymentBackButton.hidden = false;
 
   for (const panel of Object.values(paymentPanels)) {
     panel.hidden = true;
@@ -259,7 +262,9 @@ function showPaymentScreen() {
 
 function selectPaymentMethod(method) {
   paymentMethodOptions.hidden = true;
+  paymentPanels[method].querySelector(".payment-panel-actions").append(paymentMethodBackButton);
   paymentMethodBackButton.hidden = false;
+  paymentBackButton.hidden = true;
 
   for (const [methodName, panel] of Object.entries(paymentPanels)) {
     panel.hidden = methodName !== method;
@@ -271,7 +276,6 @@ function selectPaymentMethod(method) {
 
 function showPaymentSuccess() {
   orderSummary.hidden = true;
-  paymentScreen.hidden = true;
   productSelection.hidden = true;
   orderCart.hidden = true;
   paymentSuccess.hidden = false;
@@ -335,7 +339,6 @@ function renderReceipt() {
     formatPrice(paymentRecord.amountPaidInCents);
   document.getElementById("receipt-change-amount").textContent =
     formatPrice(paymentRecord.changeInCents);
-  document.getElementById("receipt-status").textContent = "Payment Successful";
 }
 
 function renderTransactionHistory() {
@@ -352,12 +355,42 @@ function renderTransactionHistory() {
     const reference = document.createElement("span");
     reference.className = "history-entry-reference";
     reference.textContent = transaction.transactionReference;
+    reference.title = transaction.transactionReference;
 
-    const details = document.createElement("span");
-    details.textContent =
-      `${transaction.transactionDate} · ${formatPrice(transaction.totalInCents)} · ${transaction.method}`;
+    const date = document.createElement("span");
+    date.className = "history-entry-date";
+    date.textContent = transaction.transactionDate;
 
-    button.append(reference, details);
+    const amount = document.createElement("span");
+    amount.className = "history-entry-amount";
+    amount.textContent = formatPrice(transaction.totalInCents);
+
+    const method = document.createElement("span");
+    method.className = "history-entry-method";
+    method.textContent = transaction.method;
+
+    const items = document.createElement("span");
+    items.className = "history-entry-items";
+
+    for (const product of transaction.items) {
+      const productButton = Array.from(
+        productList.querySelectorAll(".product-card")
+      ).find((candidate) => candidate.dataset.productName === product.name);
+
+      if (!productButton) {
+        console.error(`Cannot show product icon in history: "${product.name}" is unavailable.`);
+      }
+
+      const item = document.createElement("span");
+      item.className = "history-entry-product";
+      if (productButton) {
+        item.dataset.productId = productButton.dataset.productId;
+      }
+      item.textContent = `${product.name} × ${product.quantity}`;
+      items.append(item);
+    }
+
+    button.append(reference, date, amount, method, items);
     listItem.append(button);
     historyList.append(listItem);
   });
@@ -367,6 +400,7 @@ function showTransactionHistory() {
   renderTransactionHistory();
   historyDetail.hidden = true;
   historyList.hidden = false;
+  document.getElementById("history-back-button").hidden = false;
   transactionHistoryScreen.hidden = false;
   productSelection.hidden = true;
   orderCart.hidden = true;
@@ -410,6 +444,8 @@ function showHistoryDetails(index) {
 
   document.getElementById("history-reference").textContent =
     transaction.transactionReference;
+  document.getElementById("history-reference").title =
+    transaction.transactionReference;
   document.getElementById("history-date").textContent = transaction.transactionDate;
   document.getElementById("history-total").textContent =
     formatPrice(transaction.totalInCents);
@@ -421,12 +457,14 @@ function showHistoryDetails(index) {
   document.getElementById("history-status").textContent = transaction.status;
   historyList.hidden = true;
   historyDetail.hidden = false;
+  document.getElementById("history-back-button").hidden = true;
   document.getElementById("history-detail-heading").focus();
 }
 
 function returnToHistoryList() {
   historyDetail.hidden = true;
   historyList.hidden = false;
+  document.getElementById("history-back-button").hidden = false;
   document.getElementById("history-heading").focus();
 }
 
@@ -434,6 +472,7 @@ function returnToItemSelectionFromHistory() {
   transactionHistoryScreen.hidden = true;
   historyDetail.hidden = true;
   historyList.hidden = false;
+  document.getElementById("history-back-button").hidden = false;
   productSelection.hidden = false;
   orderCart.hidden = false;
   document.querySelector(".product-card").focus();
@@ -458,13 +497,16 @@ function completePayment(method, amountPaidInCents) {
 
 function showReceipt() {
   renderReceipt();
-  paymentConfirmation.hidden = true;
   receiptScreen.hidden = false;
+  paymentSuccess.hidden = true;
+  paymentScreen.hidden = true;
   document.getElementById("receipt-heading").focus();
 }
 
 function returnToPaymentSuccess() {
   receiptScreen.hidden = true;
+  paymentScreen.hidden = false;
+  paymentSuccess.hidden = false;
   paymentConfirmation.hidden = false;
   document.getElementById("payment-success-heading").focus();
 }
@@ -506,7 +548,6 @@ function startNewTransaction() {
   document.getElementById("receipt-method").textContent = "";
   document.getElementById("receipt-paid").textContent = "";
   document.getElementById("receipt-change-amount").textContent = "";
-  document.getElementById("receipt-status").textContent = "";
   document.getElementById("summary-feedback").textContent = "";
   document.getElementById("order-feedback").textContent = "";
   document.getElementById("order-feedback").hidden = true;
