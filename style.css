@@ -103,7 +103,8 @@ body {
 .back-button:focus-visible,
 .continue-payment-button:focus-visible,
 .payment-method-button:focus-visible,
-.payment-action-button:focus-visible {
+.payment-action-button:focus-visible,
+.receipt-action-button:focus-visible {
   outline: 4px solid #e3a72f;
   outline-offset: 3px;
 }
@@ -420,12 +421,75 @@ body {
   margin: 0;
 }
 
+.receipt-screen {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  border: 1px solid #d8e1dc;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.receipt-screen h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.receipt-screen h3 {
+  margin-top: 1.5rem;
+}
+
+.receipt-items {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.receipt-item {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(100px, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 1px solid #d8e1dc;
+}
+
+.receipt-item-name {
+  font-weight: 700;
+}
+
+.receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.receipt-action-button {
+  min-height: 60px;
+  padding: 1rem 1.25rem;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #176b50;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.receipt-action-button:hover {
+  background: #10543e;
+}
+
 .product-card:active,
 .proceed-button:active,
 .back-button:active,
 .continue-payment-button:active,
 .payment-method-button:active,
-.payment-action-button:active {
+.payment-action-button:active,
+.receipt-action-button:active {
   background-color: #0d4634;
   color: #ffffff;
 }
@@ -476,6 +540,10 @@ body {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
+  .receipt-item {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
   .summary-actions {
     flex-direction: column;
   }
@@ -483,7 +551,8 @@ body {
   .back-button,
   .continue-payment-button,
   .payment-navigation .back-button,
-  .payment-action-button {
+  .payment-action-button,
+  .receipt-action-button {
     width: 100%;
   }
 
@@ -496,6 +565,10 @@ body {
   }
 
   .payment-navigation {
+    flex-direction: column;
+  }
+
+  .receipt-actions {
     flex-direction: column;
   }
 
