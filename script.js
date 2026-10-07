@@ -7,26 +7,69 @@ const orderSummary = document.getElementById("order-summary");
 const summaryItems = document.getElementById("summary-items");
 const summaryTotalAmount = document.getElementById("summary-total-amount");
 const summaryFeedback = document.getElementById("summary-feedback");
+const summaryHeading = document.getElementById("summary-heading");
 const productSelection = document.querySelector(".product-selection");
 const orderCart = document.querySelector(".order-cart");
 const paymentScreen = document.getElementById("payment-screen");
+const paymentHeading = document.getElementById("payment-heading");
+const paymentTotalAmount = document.getElementById("payment-total-amount");
 const paymentMethodOptions = document.getElementById("payment-method-options");
 const paymentPanels = {
   cash: document.getElementById("cash-payment-panel"),
   qr: document.getElementById("qr-payment-panel"),
   card: document.getElementById("card-payment-panel")
 };
+const cashAmountInput = document.getElementById("cash-amount");
+const cashFeedback = document.getElementById("cash-feedback");
+const cashChangeDisplay = document.getElementById("cash-change");
+const cashChangeAmount = document.getElementById("cash-change-amount");
+const qrFeedback = document.getElementById("qr-feedback");
+const cardFeedback = document.getElementById("card-feedback");
+const processCardButton = document.getElementById("process-card-button");
 const paymentMethodBackButton = document.getElementById("payment-method-back-button");
 const paymentBackButton = document.getElementById("payment-back-button");
 const paymentSuccess = document.getElementById("payment-success");
 const paymentConfirmation = document.getElementById("payment-confirmation");
+const paymentSuccessHeading = document.getElementById("payment-success-heading");
+const paymentSuccessFields = {
+  reference: document.getElementById("success-reference"),
+  total: document.getElementById("success-total"),
+  method: document.getElementById("receipt-payment-method"),
+  paid: document.getElementById("receipt-amount-paid"),
+  change: document.getElementById("receipt-change")
+};
 const receiptScreen = document.getElementById("receipt-screen");
+const receiptHeading = document.getElementById("receipt-heading");
 const receiptItems = document.getElementById("receipt-items");
+const receiptFields = {
+  reference: document.getElementById("receipt-reference"),
+  footerReference: document.getElementById("receipt-footer-reference"),
+  date: document.getElementById("receipt-date"),
+  itemCount: document.getElementById("receipt-item-count"),
+  subtotal: document.getElementById("receipt-subtotal"),
+  total: document.getElementById("receipt-total"),
+  method: document.getElementById("receipt-method"),
+  successMethod: document.getElementById("receipt-success-method"),
+  paid: document.getElementById("receipt-paid"),
+  change: document.getElementById("receipt-change-amount")
+};
 const transactionHistoryScreen = document.getElementById("transaction-history-screen");
 const historyEmptyMessage = document.getElementById("history-empty");
 const historyList = document.getElementById("history-list");
 const historyDetail = document.getElementById("history-detail");
 const historyDetailItems = document.getElementById("history-detail-items");
+const historyHeading = document.getElementById("history-heading");
+const historyDetailHeading = document.getElementById("history-detail-heading");
+const historyReference = document.getElementById("history-reference");
+const historyBackButton = document.getElementById("history-back-button");
+const historyFields = {
+  date: document.getElementById("history-date"),
+  total: document.getElementById("history-total"),
+  method: document.getElementById("history-method"),
+  paid: document.getElementById("history-paid"),
+  change: document.getElementById("history-change"),
+  status: document.getElementById("history-status")
+};
 
 const SUPABASE_URL = "https://kncmtghtdiesbixkcyim.supabase.co";
 const SUPABASE_KEY = "sb_publishable_pVPkW-UBjW2VV13pVTmf8g_KSPmLJD5";
@@ -51,6 +94,7 @@ const paymentRecord = {
   status: ""
 };
 let transactionSequence = 0;
+let transactionSequenceDate = "";
 let paymentCompletionStarted = false;
 
 function getSupabaseClient() {
@@ -77,6 +121,34 @@ function formatPrice(priceInCents) {
   return `₱${(priceInCents / 100).toFixed(2)}`;
 }
 
+function getProductSubtotalInCents(product) {
+  return product.unitPriceInCents * product.quantity;
+}
+
+// Shared row content for the order summary and transaction detail views.
+function createProductDetailSpans(product, subtotalInCents, nameClass = "") {
+  const name = document.createElement("span");
+  name.className = nameClass;
+  name.textContent = product.name;
+
+  const quantity = document.createElement("span");
+  quantity.textContent = `Quantity: ${product.quantity}`;
+
+  const unitPrice = document.createElement("span");
+  unitPrice.textContent = `Unit price: ${formatPrice(product.unitPriceInCents)}`;
+
+  const subtotal = document.createElement("span");
+  subtotal.textContent = `Subtotal: ${formatPrice(subtotalInCents)}`;
+
+  return [name, quantity, unitPrice, subtotal];
+}
+
+function findProductButton(productName) {
+  return Array.from(productList.querySelectorAll(".product-card"))
+    .find((candidate) => candidate.dataset.productName === productName);
+}
+
+// Cart and order totals
 function addProduct(productButton) {
   const productId = productButton.dataset.productId;
   const productName = productButton.dataset.productName;
@@ -137,7 +209,7 @@ function renderOrder() {
   let totalInCents = 0;
 
   for (const [productId, product] of order) {
-    const subtotalInCents = product.unitPriceInCents * product.quantity;
+    const subtotalInCents = getProductSubtotalInCents(product);
     totalInCents += subtotalInCents;
 
     const cartItem = document.createElement("li");
@@ -179,45 +251,36 @@ function getOrderTotalInCents() {
   let totalInCents = 0;
 
   for (const product of order.values()) {
-    totalInCents += product.unitPriceInCents * product.quantity;
+    totalInCents += getProductSubtotalInCents(product);
   }
 
   return totalInCents;
 }
 
+// Order summary
 function renderSummary() {
   summaryItems.replaceChildren();
 
   let totalInCents = 0;
 
   for (const [productId, product] of order) {
-    const subtotalInCents = product.unitPriceInCents * product.quantity;
+    const subtotalInCents = getProductSubtotalInCents(product);
     totalInCents += subtotalInCents;
 
     const summaryItem = document.createElement("li");
     summaryItem.className = "summary-item";
     summaryItem.dataset.productId = productId;
 
-    const name = document.createElement("span");
-    name.className = "summary-item-name";
-    name.textContent = product.name;
-
-    const quantity = document.createElement("span");
-    quantity.textContent = `Quantity: ${product.quantity}`;
-
-    const unitPrice = document.createElement("span");
-    unitPrice.textContent = `Unit price: ${formatPrice(product.unitPriceInCents)}`;
-
-    const subtotal = document.createElement("span");
-    subtotal.textContent = `Subtotal: ${formatPrice(subtotalInCents)}`;
-
-    summaryItem.append(name, quantity, unitPrice, subtotal);
+    summaryItem.append(
+      ...createProductDetailSpans(product, subtotalInCents, "summary-item-name")
+    );
     summaryItems.append(summaryItem);
   }
 
   summaryTotalAmount.textContent = formatPrice(totalInCents);
 }
 
+// Screen navigation
 function showOrderSummary() {
   if (order.size === 0) {
     orderFeedback.textContent = "Please add at least one item before viewing the order summary.";
@@ -235,7 +298,7 @@ function showOrderSummary() {
   paymentScreen.hidden = true;
   paymentSuccess.hidden = true;
   orderSummary.hidden = false;
-  document.getElementById("summary-heading").focus();
+  summaryHeading.focus();
 }
 
 function returnToItemSelection() {
@@ -247,6 +310,7 @@ function returnToItemSelection() {
   document.querySelector(".product-card").focus();
 }
 
+// Payment methods and confirmation
 function showPaymentMethodOptions() {
   paymentMethodOptions.hidden = false;
   document.querySelector(".payment-navigation").append(paymentMethodBackButton);
@@ -272,23 +336,23 @@ function showPaymentScreen() {
   paymentScreen.hidden = false;
 
   const total = formatPrice(getOrderTotalInCents());
-  document.getElementById("payment-total-amount").textContent = total;
+  paymentTotalAmount.textContent = total;
 
   for (const amount of document.querySelectorAll(".payment-total-value")) {
     amount.textContent = total;
   }
 
-  document.getElementById("cash-amount").value = "";
-  document.getElementById("cash-feedback").textContent = "";
-  document.getElementById("cash-change").hidden = true;
-  document.getElementById("cash-change-amount").textContent = formatPrice(0);
-  document.getElementById("qr-feedback").textContent = "";
-  document.getElementById("card-feedback").textContent = "";
-  document.getElementById("process-card-button").disabled = false;
+  cashAmountInput.value = "";
+  cashFeedback.textContent = "";
+  cashChangeDisplay.hidden = true;
+  cashChangeAmount.textContent = formatPrice(0);
+  qrFeedback.textContent = "";
+  cardFeedback.textContent = "";
+  processCardButton.disabled = false;
   paymentBackButton.disabled = false;
   paymentMethodBackButton.disabled = false;
   showPaymentMethodOptions();
-  document.getElementById("payment-heading").focus();
+  paymentHeading.focus();
 }
 
 function selectPaymentMethod(method) {
@@ -313,26 +377,46 @@ function showPaymentSuccess() {
   paymentConfirmation.hidden = false;
   receiptScreen.hidden = true;
 
-  document.getElementById("success-reference").textContent =
-    paymentRecord.transactionReference;
-  document.getElementById("success-total").textContent =
-    formatPrice(paymentRecord.totalInCents);
-  document.getElementById("receipt-payment-method").textContent = paymentRecord.method;
-  document.getElementById("receipt-amount-paid").textContent =
-    formatPrice(paymentRecord.amountPaidInCents);
-  document.getElementById("receipt-change").textContent =
-    formatPrice(paymentRecord.changeInCents);
-  document.getElementById("payment-success-heading").focus();
+  paymentSuccessFields.reference.textContent = paymentRecord.transactionReference;
+  paymentSuccessFields.total.textContent = formatPrice(paymentRecord.totalInCents);
+  paymentSuccessFields.method.textContent = paymentRecord.method;
+  paymentSuccessFields.paid.textContent = formatPrice(paymentRecord.amountPaidInCents);
+  paymentSuccessFields.change.textContent = formatPrice(paymentRecord.changeInCents);
+  paymentSuccessHeading.focus();
 }
 
+// Transaction references and receipt
 function generateTransactionReference() {
-  transactionSequence += 1;
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const year = String(today.getFullYear()).slice(-2);
+  const dateCode = `${month}${day}${year}`;
+  const storageKey = `campus-store-pos-sequence-${dateCode}`;
 
-  if (window.crypto && typeof window.crypto.randomUUID === "function") {
-    return `POS-${window.crypto.randomUUID()}`;
+  if (transactionSequenceDate !== dateCode) {
+    transactionSequence = 0;
+    transactionSequenceDate = dateCode;
   }
 
-  return `POS-${Date.now().toString(36).toUpperCase()}-${transactionSequence}`;
+  try {
+    const savedSequence = Number.parseInt(localStorage.getItem(storageKey) || "0", 10);
+    if (Number.isInteger(savedSequence) && savedSequence > transactionSequence) {
+      transactionSequence = savedSequence;
+    }
+  } catch (error) {
+    console.error("Failed to load transaction sequence:", error);
+  }
+
+  transactionSequence += 1;
+
+  try {
+    localStorage.setItem(storageKey, String(transactionSequence));
+  } catch (error) {
+    console.error("Failed to save transaction sequence:", error);
+  }
+
+  return `POS-${dateCode}-${String(transactionSequence).padStart(3, "0")}`;
 }
 
 function renderReceipt() {
@@ -341,12 +425,10 @@ function renderReceipt() {
 
   for (const product of paymentRecord.items) {
     itemCount += product.quantity;
-    const subtotalInCents = product.unitPriceInCents * product.quantity;
+    const subtotalInCents = getProductSubtotalInCents(product);
     const item = document.createElement("li");
     item.className = "receipt-item";
-    const productButton = Array.from(
-      productList.querySelectorAll(".product-card")
-    ).find((candidate) => candidate.dataset.productName === product.name);
+    const productButton = findProductButton(product.name);
 
     if (!productButton) {
       console.error(`Cannot show product icon on receipt: "${product.name}" is unavailable.`);
@@ -374,24 +456,19 @@ function renderReceipt() {
     receiptItems.append(item);
   }
 
-  document.getElementById("receipt-reference").textContent =
-    paymentRecord.transactionReference;
-  document.getElementById("receipt-footer-reference").textContent =
-    paymentRecord.transactionReference;
-  document.getElementById("receipt-date").textContent = paymentRecord.transactionDate;
-  document.getElementById("receipt-item-count").textContent = itemCount;
-  document.getElementById("receipt-subtotal").textContent =
-    formatPrice(paymentRecord.totalInCents);
-  document.getElementById("receipt-total").textContent =
-    formatPrice(paymentRecord.totalInCents);
-  document.getElementById("receipt-method").textContent = paymentRecord.method;
-  document.getElementById("receipt-success-method").textContent = paymentRecord.method;
-  document.getElementById("receipt-paid").textContent =
-    formatPrice(paymentRecord.amountPaidInCents);
-  document.getElementById("receipt-change-amount").textContent =
-    formatPrice(paymentRecord.changeInCents);
+  receiptFields.reference.textContent = paymentRecord.transactionReference;
+  receiptFields.footerReference.textContent = paymentRecord.transactionReference;
+  receiptFields.date.textContent = paymentRecord.transactionDate;
+  receiptFields.itemCount.textContent = itemCount;
+  receiptFields.subtotal.textContent = formatPrice(paymentRecord.totalInCents);
+  receiptFields.total.textContent = formatPrice(paymentRecord.totalInCents);
+  receiptFields.method.textContent = paymentRecord.method;
+  receiptFields.successMethod.textContent = paymentRecord.method;
+  receiptFields.paid.textContent = formatPrice(paymentRecord.amountPaidInCents);
+  receiptFields.change.textContent = formatPrice(paymentRecord.changeInCents);
 }
 
+// Supabase persistence and loading
 async function saveTransactionToSupabase(transaction) {
   const client = getSupabaseClient();
   const { data: savedTransaction, error: transactionError } = await client
@@ -413,7 +490,7 @@ async function saveTransactionToSupabase(transaction) {
     product_name: product.name,
     quantity: product.quantity,
     unit_price: product.unitPriceInCents / 100,
-    subtotal: (product.unitPriceInCents * product.quantity) / 100
+    subtotal: getProductSubtotalInCents(product) / 100
   }));
   const { error: itemsError } = await client
     .from("transaction_items")
@@ -489,6 +566,7 @@ async function loadTransactionsFromSupabase() {
   transactionHistory.splice(0, transactionHistory.length, ...loadedTransactions);
 }
 
+// Transaction history
 async function renderTransactionHistory() {
   historyList.replaceChildren();
 
@@ -528,9 +606,7 @@ async function renderTransactionHistory() {
     items.className = "history-entry-items";
 
     for (const product of transaction.items) {
-      const productButton = Array.from(
-        productList.querySelectorAll(".product-card")
-      ).find((candidate) => candidate.dataset.productName === product.name);
+      const productButton = findProductButton(product.name);
 
       if (!productButton) {
         console.error(`Cannot show product icon in history: "${product.name}" is unavailable.`);
@@ -555,14 +631,14 @@ async function showTransactionHistory() {
   await renderTransactionHistory();
   historyDetail.hidden = true;
   historyList.hidden = false;
-  document.getElementById("history-back-button").hidden = false;
+  historyBackButton.hidden = false;
   transactionHistoryScreen.hidden = false;
   productSelection.hidden = true;
   orderCart.hidden = true;
   orderSummary.hidden = true;
   paymentScreen.hidden = true;
   paymentSuccess.hidden = true;
-  document.getElementById("history-heading").focus();
+  historyHeading.focus();
 }
 
 async function showHistoryDetails(index) {
@@ -607,51 +683,40 @@ async function showHistoryDetails(index) {
     const item = document.createElement("li");
     item.className = "receipt-item";
 
-    const name = document.createElement("span");
-    name.className = "receipt-item-name";
-    name.textContent = product.name;
-
-    const quantity = document.createElement("span");
-    quantity.textContent = `Quantity: ${product.quantity}`;
-
-    const unitPrice = document.createElement("span");
-    unitPrice.textContent = `Unit price: ${formatPrice(product.unitPriceInCents)}`;
-
-    const subtotal = document.createElement("span");
-    subtotal.textContent =
-      `Subtotal: ${formatPrice(product.unitPriceInCents * product.quantity)}`;
-
-    item.append(name, quantity, unitPrice, subtotal);
+    item.append(
+      ...createProductDetailSpans(
+        product,
+        getProductSubtotalInCents(product),
+        "receipt-item-name"
+      )
+    );
     historyDetailItems.append(item);
   }
 
-  document.getElementById("history-reference").textContent =
-    transaction.transactionReference;
-  document.getElementById("history-reference").title =
-    transaction.transactionReference;
-  document.getElementById("history-date").textContent = transaction.transactionDate;
-  document.getElementById("history-total").textContent =
-    formatPrice(transaction.totalInCents);
-  document.getElementById("history-method").textContent = transaction.method;
-  document.getElementById("history-paid").textContent =
+  historyReference.textContent = transaction.transactionReference;
+  historyReference.title = transaction.transactionReference;
+  historyFields.date.textContent = transaction.transactionDate;
+  historyFields.total.textContent = formatPrice(transaction.totalInCents);
+  historyFields.method.textContent = transaction.method;
+  historyFields.paid.textContent =
     transaction.amountPaidInCents === null
       ? "Not recorded"
       : formatPrice(transaction.amountPaidInCents);
-  document.getElementById("history-change").textContent =
+  historyFields.change.textContent =
     transaction.changeInCents === null
       ? "Not recorded"
       : formatPrice(transaction.changeInCents);
-  document.getElementById("history-status").textContent = transaction.status;
+  historyFields.status.textContent = transaction.status;
   historyList.hidden = true;
   historyDetail.hidden = false;
-  document.getElementById("history-back-button").hidden = true;
-  document.getElementById("history-detail-heading").focus();
+  historyBackButton.hidden = true;
+  historyDetailHeading.focus();
 }
 
 function returnToHistoryList() {
   historyDetail.hidden = true;
   historyList.hidden = false;
-  document.getElementById("history-back-button").hidden = false;
+  historyBackButton.hidden = false;
   document.getElementById("history-heading").focus();
 }
 
@@ -659,12 +724,13 @@ function returnToItemSelectionFromHistory() {
   transactionHistoryScreen.hidden = true;
   historyDetail.hidden = true;
   historyList.hidden = false;
-  document.getElementById("history-back-button").hidden = false;
+  historyBackButton.hidden = false;
   productSelection.hidden = false;
   orderCart.hidden = false;
   document.querySelector(".product-card").focus();
 }
 
+// Payment completion and transaction reset
 async function completePayment(method, amountPaidInCents) {
   if (paymentCompletionStarted) {
     return;
@@ -712,7 +778,7 @@ function showReceiptPage() {
   receiptScreen.hidden = false;
   paymentSuccess.hidden = true;
   transactionHistoryScreen.hidden = true;
-  document.getElementById("receipt-heading").focus();
+  receiptHeading.focus();
 }
 
 function startNewTransaction() {
@@ -741,33 +807,33 @@ function startNewTransaction() {
   summaryItems.replaceChildren();
   receiptItems.replaceChildren();
 
-  document.getElementById("summary-total-amount").textContent = formatPrice(0);
-  document.getElementById("payment-total-amount").textContent = formatPrice(0);
-  document.getElementById("success-reference").textContent = "";
-  document.getElementById("success-total").textContent = "";
-  document.getElementById("receipt-payment-method").textContent = "";
-  document.getElementById("receipt-amount-paid").textContent = "";
-  document.getElementById("receipt-change").textContent = "";
-  document.getElementById("receipt-reference").textContent = "";
-  document.getElementById("receipt-footer-reference").textContent = "";
-  document.getElementById("receipt-date").textContent = "";
-  document.getElementById("receipt-item-count").textContent = "0";
-  document.getElementById("receipt-subtotal").textContent = formatPrice(0);
-  document.getElementById("receipt-total").textContent = "";
-  document.getElementById("receipt-method").textContent = "";
-  document.getElementById("receipt-success-method").textContent = "";
-  document.getElementById("receipt-paid").textContent = "";
-  document.getElementById("receipt-change-amount").textContent = "";
-  document.getElementById("summary-feedback").textContent = "";
-  document.getElementById("order-feedback").textContent = "";
-  document.getElementById("order-feedback").hidden = true;
-  document.getElementById("cash-amount").value = "";
-  document.getElementById("cash-feedback").textContent = "";
-  document.getElementById("cash-change").hidden = true;
-  document.getElementById("cash-change-amount").textContent = formatPrice(0);
-  document.getElementById("qr-feedback").textContent = "";
-  document.getElementById("card-feedback").textContent = "";
-  document.getElementById("process-card-button").disabled = false;
+  summaryTotalAmount.textContent = formatPrice(0);
+  paymentTotalAmount.textContent = formatPrice(0);
+  paymentSuccessFields.reference.textContent = "";
+  paymentSuccessFields.total.textContent = "";
+  paymentSuccessFields.method.textContent = "";
+  paymentSuccessFields.paid.textContent = "";
+  paymentSuccessFields.change.textContent = "";
+  receiptFields.reference.textContent = "";
+  receiptFields.footerReference.textContent = "";
+  receiptFields.date.textContent = "";
+  receiptFields.itemCount.textContent = "0";
+  receiptFields.subtotal.textContent = formatPrice(0);
+  receiptFields.total.textContent = "";
+  receiptFields.method.textContent = "";
+  receiptFields.successMethod.textContent = "";
+  receiptFields.paid.textContent = "";
+  receiptFields.change.textContent = "";
+  summaryFeedback.textContent = "";
+  orderFeedback.textContent = "";
+  orderFeedback.hidden = true;
+  cashAmountInput.value = "";
+  cashFeedback.textContent = "";
+  cashChangeDisplay.hidden = true;
+  cashChangeAmount.textContent = formatPrice(0);
+  qrFeedback.textContent = "";
+  cardFeedback.textContent = "";
+  processCardButton.disabled = false;
   paymentBackButton.disabled = false;
   paymentMethodBackButton.disabled = false;
   showPaymentMethodOptions();
@@ -775,25 +841,23 @@ function startNewTransaction() {
   document.querySelector(".product-card").focus();
 }
 
+// Payment handlers
 function handleCashPayment(event) {
   event.preventDefault();
 
-  const input = document.getElementById("cash-amount");
-  const feedback = document.getElementById("cash-feedback");
-  const changeDisplay = document.getElementById("cash-change");
-  const amountText = input.value.trim();
-  feedback.textContent = "";
-  changeDisplay.hidden = true;
+  const amountText = cashAmountInput.value.trim();
+  cashFeedback.textContent = "";
+  cashChangeDisplay.hidden = true;
 
   if (!amountText) {
-    feedback.textContent = "Enter the amount paid.";
-    input.focus();
+    cashFeedback.textContent = "Enter the amount paid.";
+    cashAmountInput.focus();
     return;
   }
 
   if (!/^(?:\d+(?:\.\d{0,2})?|\.\d{1,2})$/.test(amountText)) {
-    feedback.textContent = "Enter a valid, non-negative amount with up to two decimal places.";
-    input.focus();
+    cashFeedback.textContent = "Enter a valid, non-negative amount with up to two decimal places.";
+    cashAmountInput.focus();
     return;
   }
 
@@ -801,20 +865,20 @@ function handleCashPayment(event) {
   const totalInCents = getOrderTotalInCents();
 
   if (!Number.isSafeInteger(amountPaidInCents)) {
-    feedback.textContent = "Enter a valid payment amount.";
-    input.focus();
+    cashFeedback.textContent = "Enter a valid payment amount.";
+    cashAmountInput.focus();
     return;
   }
 
   if (amountPaidInCents < totalInCents) {
-    feedback.textContent = "Insufficient payment. The amount paid is less than the total due.";
-    input.focus();
+    cashFeedback.textContent = "Insufficient payment. The amount paid is less than the total due.";
+    cashAmountInput.focus();
     return;
   }
 
   const changeInCents = amountPaidInCents - totalInCents;
-  document.getElementById("cash-change-amount").textContent = formatPrice(changeInCents);
-  changeDisplay.hidden = false;
+  cashChangeAmount.textContent = formatPrice(changeInCents);
+  cashChangeDisplay.hidden = false;
   completePayment("Cash", amountPaidInCents);
 }
 
@@ -823,21 +887,20 @@ function confirmQrPayment() {
 }
 
 function processCardPayment() {
-  const processButton = document.getElementById("process-card-button");
-  const feedback = document.getElementById("card-feedback");
-  processButton.disabled = true;
+  processCardButton.disabled = true;
   paymentBackButton.disabled = true;
   paymentMethodBackButton.disabled = true;
-  feedback.textContent = "Processing card payment...";
+  cardFeedback.textContent = "Processing card payment...";
 
   window.setTimeout(() => {
-    processButton.disabled = false;
+    processCardButton.disabled = false;
     paymentBackButton.disabled = false;
     paymentMethodBackButton.disabled = false;
     completePayment("Credit/Debit Card", getOrderTotalInCents());
   }, 1200);
 }
 
+// Event listeners
 productList.addEventListener("click", (event) => {
   const productButton = event.target.closest(".product-card");
 
