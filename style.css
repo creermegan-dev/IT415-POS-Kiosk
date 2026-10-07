@@ -10,6 +10,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
@@ -39,7 +43,9 @@ body {
 
 .product-selection,
 .order-cart,
-.order-summary {
+.order-summary,
+.payment-screen,
+.payment-success {
   padding: 1.5rem;
   border: 1px solid #d8e1dc;
   border-radius: 12px;
@@ -48,7 +54,9 @@ body {
 
 .product-selection h2,
 .order-cart h2,
-.order-summary h2 {
+.order-summary h2,
+.payment-screen h2,
+.payment-success h2 {
   margin: 0;
   font-size: 1.5rem;
 }
@@ -93,7 +101,9 @@ body {
 }
 
 .back-button:focus-visible,
-.continue-payment-button:focus-visible {
+.continue-payment-button:focus-visible,
+.payment-method-button:focus-visible,
+.payment-action-button:focus-visible {
   outline: 4px solid #e3a72f;
   outline-offset: 3px;
 }
@@ -172,6 +182,11 @@ body {
   grid-column: 1 / -1;
 }
 
+.payment-screen,
+.payment-success {
+  grid-column: 1 / -1;
+}
+
 .summary-items {
   display: grid;
   gap: 0.75rem;
@@ -244,10 +259,173 @@ body {
   background: #10543e;
 }
 
+.payment-due {
+  margin: 1.25rem 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.payment-due span {
+  color: #176b50;
+}
+
+.payment-method-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.payment-method-button {
+  min-height: 110px;
+  padding: 1.25rem;
+  border: 2px solid #cbd9d1;
+  border-radius: 10px;
+  color: #1f2933;
+  background: #f8fbf9;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.payment-method-button:hover {
+  border-color: #176b50;
+  background: #eef7f1;
+}
+
+.payment-panel {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #d8e1dc;
+  border-radius: 10px;
+  background: #f8fbf9;
+}
+
+.payment-panel h3 {
+  margin-top: 0;
+}
+
+#cash-payment-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.cash-payment-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 400px;
+  min-height: 60px;
+  padding: 0 1rem;
+  border: 2px solid #9aa9a1;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 1.2rem;
+}
+
+.cash-payment-entry input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  font: inherit;
+}
+
+.payment-feedback {
+  min-height: 1.5em;
+  color: #a33126;
+  font-weight: 700;
+}
+
+.payment-status {
+  min-height: 1.5em;
+  color: #176b50;
+  font-weight: 700;
+}
+
+.payment-change {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.qr-instructions {
+  font-size: 1.05rem;
+}
+
+.qr-placeholder {
+  display: grid;
+  width: min(220px, 100%);
+  aspect-ratio: 1;
+  place-items: center;
+  margin: 1rem 0;
+  border: 10px dashed #176b50;
+  border-radius: 8px;
+  color: #176b50;
+  background: repeating-linear-gradient(45deg, #ffffff, #ffffff 8px, #e7f0ea 8px, #e7f0ea 16px);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.payment-action-button {
+  min-width: 200px;
+  min-height: 60px;
+  padding: 1rem 1.25rem;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #176b50;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.payment-action-button:hover {
+  background: #10543e;
+}
+
+.payment-action-button:disabled {
+  background: #78877f;
+  cursor: wait;
+}
+
+.payment-navigation {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.payment-receipt-details {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 600px;
+  margin: 1.5rem 0 0;
+}
+
+.payment-receipt-details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f2f5f3;
+}
+
+.payment-receipt-details dt {
+  font-weight: 700;
+}
+
+.payment-receipt-details dd {
+  margin: 0;
+}
+
 .product-card:active,
 .proceed-button:active,
 .back-button:active,
-.continue-payment-button:active {
+.continue-payment-button:active,
+.payment-method-button:active,
+.payment-action-button:active {
   background-color: #0d4634;
   color: #ffffff;
 }
@@ -278,7 +456,9 @@ body {
 
   .product-selection,
   .order-cart,
-  .order-summary {
+  .order-summary,
+  .payment-screen,
+  .payment-success {
     padding: 1rem;
   }
 
@@ -301,7 +481,26 @@ body {
   }
 
   .back-button,
-  .continue-payment-button {
+  .continue-payment-button,
+  .payment-navigation .back-button,
+  .payment-action-button {
     width: 100%;
+  }
+
+  .payment-method-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .payment-method-button {
+    min-height: 80px;
+  }
+
+  .payment-navigation {
+    flex-direction: column;
+  }
+
+  .payment-receipt-details div {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

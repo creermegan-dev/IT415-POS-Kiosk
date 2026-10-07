@@ -68,6 +68,66 @@
         </button>
       </div>
     </section>
+
+    <section id="payment-screen" class="payment-screen" aria-labelledby="payment-heading" hidden>
+      <h2 id="payment-heading" tabindex="-1">Choose a Payment Method</h2>
+      <p class="payment-due">Amount due: <span id="payment-total-amount">₱0.00</span></p>
+
+      <div id="payment-method-options" class="payment-method-options">
+        <button class="payment-method-button" type="button" data-payment-method="cash">Cash</button>
+        <button class="payment-method-button" type="button" data-payment-method="qr">QR Payment</button>
+        <button class="payment-method-button" type="button" data-payment-method="card">Credit/Debit Card</button>
+      </div>
+
+      <section id="cash-payment-panel" class="payment-panel" aria-labelledby="cash-heading" hidden>
+        <h3 id="cash-heading" tabindex="-1">Cash Payment</h3>
+        <p class="payment-due">Total amount due: <span class="payment-total-value">₱0.00</span></p>
+        <form id="cash-payment-form" novalidate>
+          <label for="cash-amount">Amount paid</label>
+          <div class="cash-payment-entry">
+            <span aria-hidden="true">₱</span>
+            <input id="cash-amount" name="cash-amount" type="text" inputmode="decimal" autocomplete="off">
+          </div>
+          <p id="cash-feedback" class="payment-feedback" role="alert" aria-live="polite"></p>
+          <p id="cash-change" class="payment-change" hidden>Change: <span id="cash-change-amount">₱0.00</span></p>
+          <button class="payment-action-button" type="submit">Pay Now</button>
+        </form>
+      </section>
+
+      <section id="qr-payment-panel" class="payment-panel" aria-labelledby="qr-heading" hidden>
+        <h3 id="qr-heading" tabindex="-1">QR Payment</h3>
+        <p class="payment-due">Amount to pay: <span class="payment-total-value">₱0.00</span></p>
+        <p class="qr-instructions">Scan this simulated QR code using your payment app.</p>
+        <div class="qr-placeholder" role="img" aria-label="Simulated QR code placeholder">QR</div>
+        <p id="qr-feedback" class="payment-status" role="status" aria-live="polite"></p>
+        <button id="confirm-qr-button" class="payment-action-button" type="button">Confirm Payment</button>
+      </section>
+
+      <section id="card-payment-panel" class="payment-panel" aria-labelledby="card-heading" hidden>
+        <h3 id="card-heading" tabindex="-1">Credit/Debit Card</h3>
+        <p class="payment-due">Amount due: <span class="payment-total-value">₱0.00</span></p>
+        <p>Please tap, insert, or swipe your card.</p>
+        <p id="card-feedback" class="payment-status" role="status" aria-live="polite"></p>
+        <button id="process-card-button" class="payment-action-button" type="button">Process Payment</button>
+      </section>
+
+      <div class="payment-navigation">
+        <button id="payment-method-back-button" class="back-button" type="button" hidden>
+          Choose Another Method
+        </button>
+        <button id="payment-back-button" class="back-button" type="button">Back to Order Summary</button>
+      </div>
+    </section>
+
+    <section id="payment-success" class="payment-success" aria-labelledby="payment-success-heading" hidden>
+      <h2 id="payment-success-heading" tabindex="-1">Payment Successful</h2>
+      <p>Your payment has been completed.</p>
+      <dl class="payment-receipt-details">
+        <div><dt>Payment method</dt><dd id="receipt-payment-method"></dd></div>
+        <div><dt>Amount paid</dt><dd id="receipt-amount-paid"></dd></div>
+        <div><dt>Change</dt><dd id="receipt-change"></dd></div>
+      </dl>
+    </section>
   </main>
 </body>
 </html>
