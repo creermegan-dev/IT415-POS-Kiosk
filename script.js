@@ -22,8 +22,14 @@ const paymentSuccess = document.getElementById("payment-success");
 const paymentConfirmation = document.getElementById("payment-confirmation");
 const receiptScreen = document.getElementById("receipt-screen");
 const receiptItems = document.getElementById("receipt-items");
+const transactionHistoryScreen = document.getElementById("transaction-history-screen");
+const historyEmptyMessage = document.getElementById("history-empty");
+const historyList = document.getElementById("history-list");
+const historyDetail = document.getElementById("history-detail");
+const historyDetailItems = document.getElementById("history-detail-items");
 
 const order = new Map();
+const transactionHistory = [];
 const paymentRecord = {
   method: "",
   amountPaidInCents: 0,
@@ -31,7 +37,8 @@ const paymentRecord = {
   transactionReference: "",
   transactionDate: "",
   totalInCents: 0,
-  items: []
+  items: [],
+  status: ""
 };
 let transactionSequence = 0;
 
@@ -331,6 +338,107 @@ function renderReceipt() {
   document.getElementById("receipt-status").textContent = "Payment Successful";
 }
 
+function renderTransactionHistory() {
+  historyList.replaceChildren();
+  historyEmptyMessage.hidden = transactionHistory.length > 0;
+
+  transactionHistory.forEach((transaction, index) => {
+    const listItem = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "history-entry-button";
+    button.dataset.historyIndex = index;
+
+    const reference = document.createElement("span");
+    reference.className = "history-entry-reference";
+    reference.textContent = transaction.transactionReference;
+
+    const details = document.createElement("span");
+    details.textContent =
+      `${transaction.transactionDate} · ${formatPrice(transaction.totalInCents)} · ${transaction.method}`;
+
+    button.append(reference, details);
+    listItem.append(button);
+    historyList.append(listItem);
+  });
+}
+
+function showTransactionHistory() {
+  renderTransactionHistory();
+  historyDetail.hidden = true;
+  historyList.hidden = false;
+  transactionHistoryScreen.hidden = false;
+  productSelection.hidden = true;
+  orderCart.hidden = true;
+  orderSummary.hidden = true;
+  paymentScreen.hidden = true;
+  paymentSuccess.hidden = true;
+  document.getElementById("history-heading").focus();
+}
+
+function showHistoryDetails(index) {
+  const transaction = transactionHistory[index];
+
+  if (!transaction) {
+    console.error("Cannot show transaction: the selected history entry is unavailable.");
+    return;
+  }
+
+  historyDetailItems.replaceChildren();
+
+  for (const product of transaction.items) {
+    const item = document.createElement("li");
+    item.className = "receipt-item";
+
+    const name = document.createElement("span");
+    name.className = "receipt-item-name";
+    name.textContent = product.name;
+
+    const quantity = document.createElement("span");
+    quantity.textContent = `Quantity: ${product.quantity}`;
+
+    const unitPrice = document.createElement("span");
+    unitPrice.textContent = `Unit price: ${formatPrice(product.unitPriceInCents)}`;
+
+    const subtotal = document.createElement("span");
+    subtotal.textContent =
+      `Subtotal: ${formatPrice(product.unitPriceInCents * product.quantity)}`;
+
+    item.append(name, quantity, unitPrice, subtotal);
+    historyDetailItems.append(item);
+  }
+
+  document.getElementById("history-reference").textContent =
+    transaction.transactionReference;
+  document.getElementById("history-date").textContent = transaction.transactionDate;
+  document.getElementById("history-total").textContent =
+    formatPrice(transaction.totalInCents);
+  document.getElementById("history-method").textContent = transaction.method;
+  document.getElementById("history-paid").textContent =
+    formatPrice(transaction.amountPaidInCents);
+  document.getElementById("history-change").textContent =
+    formatPrice(transaction.changeInCents);
+  document.getElementById("history-status").textContent = transaction.status;
+  historyList.hidden = true;
+  historyDetail.hidden = false;
+  document.getElementById("history-detail-heading").focus();
+}
+
+function returnToHistoryList() {
+  historyDetail.hidden = true;
+  historyList.hidden = false;
+  document.getElementById("history-heading").focus();
+}
+
+function returnToItemSelectionFromHistory() {
+  transactionHistoryScreen.hidden = true;
+  historyDetail.hidden = true;
+  historyList.hidden = false;
+  productSelection.hidden = false;
+  orderCart.hidden = false;
+  document.querySelector(".product-card").focus();
+}
+
 function completePayment(method, amountPaidInCents) {
   const totalInCents = getOrderTotalInCents();
   paymentRecord.method = method;
@@ -340,6 +448,11 @@ function completePayment(method, amountPaidInCents) {
   paymentRecord.transactionDate = new Date().toLocaleString();
   paymentRecord.totalInCents = totalInCents;
   paymentRecord.items = Array.from(order.values(), (product) => ({ ...product }));
+  paymentRecord.status = "Payment Successful";
+  transactionHistory.unshift({
+    ...paymentRecord,
+    items: paymentRecord.items.map((product) => ({ ...product }))
+  });
   showPaymentSuccess();
 }
 
@@ -365,9 +478,11 @@ function startNewTransaction() {
     transactionReference: "",
     transactionDate: "",
     totalInCents: 0,
-    items: []
+    items: [],
+    status: ""
   });
 
+  transactionHistoryScreen.hidden = true;
   paymentSuccess.hidden = true;
   paymentConfirmation.hidden = false;
   receiptScreen.hidden = true;
@@ -521,5 +636,15 @@ document.getElementById("process-card-button").addEventListener("click", process
 document.getElementById("view-receipt-button").addEventListener("click", showReceipt);
 document.getElementById("back-to-success-button").addEventListener("click", returnToPaymentSuccess);
 document.getElementById("new-transaction-button").addEventListener("click", startNewTransaction);
+document.getElementById("transaction-history-button").addEventListener("click", showTransactionHistory);
+historyList.addEventListener("click", (event) => {
+  const transactionButton = event.target.closest("button[data-history-index]");
+
+  if (transactionButton && historyList.contains(transactionButton)) {
+    showHistoryDetails(Number(transactionButton.dataset.historyIndex));
+  }
+});
+document.getElementById("history-list-back-button").addEventListener("click", returnToHistoryList);
+document.getElementById("history-back-button").addEventListener("click", returnToItemSelectionFromHistory);
 
 renderOrder();
