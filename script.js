@@ -2,6 +2,13 @@ const productList = document.getElementById("product-list");
 const cartItems = document.getElementById("cart-items");
 const cartEmptyMessage = document.getElementById("cart-empty");
 const totalAmount = document.getElementById("total-amount");
+const orderFeedback = document.getElementById("order-feedback");
+const orderSummary = document.getElementById("order-summary");
+const summaryItems = document.getElementById("summary-items");
+const summaryTotalAmount = document.getElementById("summary-total-amount");
+const summaryFeedback = document.getElementById("summary-feedback");
+const productSelection = document.querySelector(".product-selection");
+const orderCart = document.querySelector(".order-cart");
 
 const order = new Map();
 
@@ -31,6 +38,8 @@ function addProduct(productButton) {
     });
   }
 
+  orderFeedback.hidden = true;
+  orderFeedback.textContent = "";
   renderOrder();
 }
 
@@ -105,6 +114,63 @@ function renderOrder() {
   totalAmount.textContent = formatPrice(totalInCents);
 }
 
+function renderSummary() {
+  summaryItems.replaceChildren();
+
+  let totalInCents = 0;
+
+  for (const product of order.values()) {
+    const subtotalInCents = product.unitPriceInCents * product.quantity;
+    totalInCents += subtotalInCents;
+
+    const summaryItem = document.createElement("li");
+    summaryItem.className = "summary-item";
+
+    const name = document.createElement("span");
+    name.className = "summary-item-name";
+    name.textContent = product.name;
+
+    const quantity = document.createElement("span");
+    quantity.textContent = `Quantity: ${product.quantity}`;
+
+    const unitPrice = document.createElement("span");
+    unitPrice.textContent = `Unit price: ${formatPrice(product.unitPriceInCents)}`;
+
+    const subtotal = document.createElement("span");
+    subtotal.textContent = `Subtotal: ${formatPrice(subtotalInCents)}`;
+
+    summaryItem.append(name, quantity, unitPrice, subtotal);
+    summaryItems.append(summaryItem);
+  }
+
+  summaryTotalAmount.textContent = formatPrice(totalInCents);
+}
+
+function showOrderSummary() {
+  if (order.size === 0) {
+    orderFeedback.textContent = "Please add at least one item before viewing the order summary.";
+    orderFeedback.hidden = false;
+    orderFeedback.focus();
+    return;
+  }
+
+  orderFeedback.hidden = true;
+  orderFeedback.textContent = "";
+  summaryFeedback.textContent = "";
+  renderSummary();
+  productSelection.hidden = true;
+  orderCart.hidden = true;
+  orderSummary.hidden = false;
+  document.getElementById("summary-heading").focus();
+}
+
+function returnToItemSelection() {
+  orderSummary.hidden = true;
+  productSelection.hidden = false;
+  orderCart.hidden = false;
+  document.querySelector(".product-card").focus();
+}
+
 productList.addEventListener("click", (event) => {
   const productButton = event.target.closest(".product-card");
 
@@ -131,6 +197,17 @@ cartItems.addEventListener("click", (event) => {
     order.delete(productId);
     renderOrder();
   }
+});
+
+document.getElementById("proceed-button").addEventListener("click", showOrderSummary);
+document.getElementById("back-button").addEventListener("click", returnToItemSelection);
+document.getElementById("continue-payment-button").addEventListener("click", () => {
+  if (order.size === 0) {
+    summaryFeedback.textContent = "Please add at least one item before continuing.";
+    return;
+  }
+
+  summaryFeedback.textContent = "Payment processing is not available yet.";
 });
 
 renderOrder();

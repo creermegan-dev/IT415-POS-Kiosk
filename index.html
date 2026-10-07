@@ -50,10 +50,24 @@
       <p id="cart-empty" class="cart-empty">No items selected.</p>
       <ul id="cart-items" class="cart-items" aria-live="polite"></ul>
       <p class="cart-total">Total: <span id="total-amount">₱0.00</span></p>
+      <p id="order-feedback" class="order-feedback" role="alert" tabindex="-1" hidden></p>
       <button id="proceed-button" class="proceed-button" type="button">
         Proceed to Order Summary
       </button>
     </aside>
+
+    <section id="order-summary" class="order-summary" aria-labelledby="summary-heading" hidden>
+      <h2 id="summary-heading" tabindex="-1">Order Summary</h2>
+      <ul id="summary-items" class="summary-items" aria-live="polite"></ul>
+      <p class="summary-total">Total: <span id="summary-total-amount">₱0.00</span></p>
+      <p id="summary-feedback" class="summary-feedback" role="status" aria-live="polite"></p>
+      <div class="summary-actions">
+        <button id="back-button" class="back-button" type="button">Back to Item Selection</button>
+        <button id="continue-payment-button" class="continue-payment-button" type="button">
+          Continue to Payment
+        </button>
+      </div>
+    </section>
   </main>
 </body>
 </html>
