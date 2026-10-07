@@ -28,9 +28,19 @@ const historyList = document.getElementById("history-list");
 const historyDetail = document.getElementById("history-detail");
 const historyDetailItems = document.getElementById("history-detail-items");
 
+const SUPABASE_URL = "https://kncmtghtdiesbixkcyim.supabase.co";
+const SUPABASE_KEY = "sb_publishable_pVPkW-UBjW2VV13pVTmf8g_KSPmLJD5";
+const supabaseClient =
+  SUPABASE_URL !== "MY_SUPABASE_PROJECT_URL" &&
+  SUPABASE_KEY !== "MY_SUPABASE_PUBLISHABLE_KEY" &&
+  typeof window.supabase?.createClient === "function"
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    : null;
+
 const order = new Map();
 const transactionHistory = [];
 const paymentRecord = {
+  databaseId: null,
   method: "",
   amountPaidInCents: 0,
   changeInCents: 0,
@@ -41,6 +51,27 @@ const paymentRecord = {
   status: ""
 };
 let transactionSequence = 0;
+let paymentCompletionStarted = false;
+
+function getSupabaseClient() {
+  if (!supabaseClient) {
+    throw new Error(
+      "Supabase is not configured. Set SUPABASE_URL and SUPABASE_KEY to your project URL and publishable key."
+    );
+  }
+
+  return supabaseClient;
+}
+
+function toCents(amount) {
+  const numericAmount = Number(amount);
+
+  if (!Number.isFinite(numericAmount)) {
+    throw new Error("Supabase returned an invalid transaction amount.");
+  }
+
+  return Math.round(numericAmount * 100);
+}
 
 function formatPrice(priceInCents) {
   return `₱${(priceInCents / 100).toFixed(2)}`;
@@ -311,6 +342,15 @@ function renderReceipt() {
     const subtotalInCents = product.unitPriceInCents * product.quantity;
     const item = document.createElement("li");
     item.className = "receipt-item";
+    const productButton = Array.from(
+      productList.querySelectorAll(".product-card")
+    ).find((candidate) => candidate.dataset.productName === product.name);
+
+    if (!productButton) {
+      console.error(`Cannot show product icon on receipt: "${product.name}" is unavailable.`);
+    } else {
+      item.dataset.productId = productButton.dataset.productId;
+    }
 
     const name = document.createElement("span");
     name.className = "receipt-item-name";
@@ -341,8 +381,112 @@ function renderReceipt() {
     formatPrice(paymentRecord.changeInCents);
 }
 
-function renderTransactionHistory() {
+async function saveTransactionToSupabase(transaction) {
+  const client = getSupabaseClient();
+  const { data: savedTransaction, error: transactionError } = await client
+    .from("transactions")
+    .insert({
+      transaction_code: transaction.transactionReference,
+      payment_method: transaction.method,
+      total_amount: transaction.totalInCents / 100
+    })
+    .select("id, transaction_code, created_at")
+    .single();
+
+  if (transactionError) {
+    throw transactionError;
+  }
+
+  const transactionItems = transaction.items.map((product) => ({
+    transaction_id: savedTransaction.id,
+    product_name: product.name,
+    quantity: product.quantity,
+    unit_price: product.unitPriceInCents / 100,
+    subtotal: (product.unitPriceInCents * product.quantity) / 100
+  }));
+  const { error: itemsError } = await client
+    .from("transaction_items")
+    .insert(transactionItems);
+
+  if (itemsError) {
+    throw itemsError;
+  }
+
+  return savedTransaction;
+}
+
+async function loadTransactionsFromSupabase() {
+  const client = getSupabaseClient();
+  const { data: transactions, error: transactionsError } = await client
+    .from("transactions")
+    .select("id, transaction_code, payment_method, total_amount, created_at")
+    .order("created_at", { ascending: false });
+
+  if (transactionsError) {
+    throw transactionsError;
+  }
+
+  const transactionIds = transactions.map((transaction) => transaction.id);
+  let itemsByTransaction = new Map();
+
+  if (transactionIds.length > 0) {
+    const { data: items, error: itemsError } = await client
+      .from("transaction_items")
+      .select("id, transaction_id, product_name, quantity, unit_price, subtotal")
+      .in("transaction_id", transactionIds)
+      .order("id", { ascending: true });
+
+    if (itemsError) {
+      console.error("Failed to load transaction items:", itemsError);
+    } else {
+      itemsByTransaction = new Map();
+      for (const item of items) {
+        const transactionItems = itemsByTransaction.get(item.transaction_id) || [];
+        transactionItems.push({
+          name: item.product_name,
+          quantity: item.quantity,
+          unitPriceInCents: toCents(item.unit_price)
+        });
+        itemsByTransaction.set(item.transaction_id, transactionItems);
+      }
+    }
+  }
+
+  const existingTransactions = new Map(
+    transactionHistory
+      .filter((transaction) => transaction.databaseId !== null)
+      .map((transaction) => [transaction.databaseId, transaction])
+  );
+  const loadedTransactions = transactions.map((transaction) => {
+    const existingTransaction = existingTransactions.get(transaction.id);
+    const loadedItems = itemsByTransaction.get(transaction.id);
+
+    return {
+      ...existingTransaction,
+      databaseId: transaction.id,
+      transactionReference: transaction.transaction_code,
+      method: transaction.payment_method,
+      totalInCents: toCents(transaction.total_amount),
+      transactionDate: new Date(transaction.created_at).toLocaleString(),
+      amountPaidInCents: existingTransaction?.amountPaidInCents ?? null,
+      changeInCents: existingTransaction?.changeInCents ?? null,
+      status: existingTransaction?.status || "Payment Successful",
+      items: loadedItems || existingTransaction?.items || []
+    };
+  });
+
+  transactionHistory.splice(0, transactionHistory.length, ...loadedTransactions);
+}
+
+async function renderTransactionHistory() {
   historyList.replaceChildren();
+
+  try {
+    await loadTransactionsFromSupabase();
+  } catch (error) {
+    console.error("Failed to load transactions:", error);
+  }
+
   historyEmptyMessage.hidden = transactionHistory.length > 0;
 
   transactionHistory.forEach((transaction, index) => {
@@ -396,8 +540,8 @@ function renderTransactionHistory() {
   });
 }
 
-function showTransactionHistory() {
-  renderTransactionHistory();
+async function showTransactionHistory() {
+  await renderTransactionHistory();
   historyDetail.hidden = true;
   historyList.hidden = false;
   document.getElementById("history-back-button").hidden = false;
@@ -410,7 +554,7 @@ function showTransactionHistory() {
   document.getElementById("history-heading").focus();
 }
 
-function showHistoryDetails(index) {
+async function showHistoryDetails(index) {
   const transaction = transactionHistory[index];
 
   if (!transaction) {
@@ -418,9 +562,37 @@ function showHistoryDetails(index) {
     return;
   }
 
+  let products = transaction.items;
+  if (transaction.databaseId !== null) {
+    try {
+      const client = getSupabaseClient();
+      const { data: items, error } = await client
+        .from("transaction_items")
+        .select("product_name, quantity, unit_price")
+        .eq("transaction_id", transaction.databaseId)
+        .order("id", { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      products = items.map((item) => ({
+        name: item.product_name,
+        quantity: item.quantity,
+        unitPriceInCents: toCents(item.unit_price)
+      }));
+      transaction.items = products;
+    } catch (error) {
+      console.error("Failed to load transaction items:", error);
+      if (products.length === 0) {
+        return;
+      }
+    }
+  }
+
   historyDetailItems.replaceChildren();
 
-  for (const product of transaction.items) {
+  for (const product of products) {
     const item = document.createElement("li");
     item.className = "receipt-item";
 
@@ -451,9 +623,13 @@ function showHistoryDetails(index) {
     formatPrice(transaction.totalInCents);
   document.getElementById("history-method").textContent = transaction.method;
   document.getElementById("history-paid").textContent =
-    formatPrice(transaction.amountPaidInCents);
+    transaction.amountPaidInCents === null
+      ? "Not recorded"
+      : formatPrice(transaction.amountPaidInCents);
   document.getElementById("history-change").textContent =
-    formatPrice(transaction.changeInCents);
+    transaction.changeInCents === null
+      ? "Not recorded"
+      : formatPrice(transaction.changeInCents);
   document.getElementById("history-status").textContent = transaction.status;
   historyList.hidden = true;
   historyDetail.hidden = false;
@@ -478,8 +654,14 @@ function returnToItemSelectionFromHistory() {
   document.querySelector(".product-card").focus();
 }
 
-function completePayment(method, amountPaidInCents) {
+async function completePayment(method, amountPaidInCents) {
+  if (paymentCompletionStarted) {
+    return;
+  }
+
+  paymentCompletionStarted = true;
   const totalInCents = getOrderTotalInCents();
+  paymentRecord.databaseId = null;
   paymentRecord.method = method;
   paymentRecord.amountPaidInCents = amountPaidInCents;
   paymentRecord.changeInCents = Math.max(0, amountPaidInCents - totalInCents);
@@ -492,6 +674,21 @@ function completePayment(method, amountPaidInCents) {
     ...paymentRecord,
     items: paymentRecord.items.map((product) => ({ ...product }))
   });
+
+  try {
+    const savedTransaction = await saveTransactionToSupabase(paymentRecord);
+    paymentRecord.databaseId = savedTransaction.id;
+    paymentRecord.transactionReference = savedTransaction.transaction_code;
+    paymentRecord.transactionDate = new Date(savedTransaction.created_at).toLocaleString();
+    Object.assign(transactionHistory[0], {
+      databaseId: savedTransaction.id,
+      transactionReference: savedTransaction.transaction_code,
+      transactionDate: paymentRecord.transactionDate
+    });
+  } catch (error) {
+    console.error("Failed to save transaction:", error);
+  }
+
   showPaymentSuccess();
 }
 
@@ -513,7 +710,9 @@ function returnToPaymentSuccess() {
 
 function startNewTransaction() {
   order.clear();
+  paymentCompletionStarted = false;
   Object.assign(paymentRecord, {
+    databaseId: null,
     method: "",
     amountPaidInCents: 0,
     changeInCents: 0,

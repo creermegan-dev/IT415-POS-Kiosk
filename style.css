@@ -1714,6 +1714,30 @@ button {
   font-size: 1.45rem;
 }
 
+.receipt-screen .receipt-item[data-product-id="coffee"]::before {
+  content: "☕";
+}
+
+.receipt-screen .receipt-item[data-product-id="sandwich"]::before {
+  content: "🥪";
+}
+
+.receipt-screen .receipt-item[data-product-id="soft-drink"]::before {
+  content: "🥤";
+}
+
+.receipt-screen .receipt-item[data-product-id="cookies"]::before {
+  content: "🍪";
+}
+
+.receipt-screen .receipt-item[data-product-id="bottled-water"]::before {
+  content: "💧";
+}
+
+.receipt-screen .receipt-item[data-product-id="chocolate"]::before {
+  content: "🍫";
+}
+
 .receipt-screen .receipt-item-name {
   grid-area: name;
   min-width: 0;
